@@ -12,6 +12,19 @@ app.use(express.static("public"));
 const leaderboardCache = new NodeCache({ stdTTL: 60 * 5 }); // 5 min cache
 const detailCache = new NodeCache();
 
+const difficulties = [5, 10, 15];
+const navItems = [];
+Object.keys(leaderboardIds).forEach((id) => {
+    navItems.push(
+        difficulties.map((difficulty) => {
+            return {
+                name: `${leaderboardIds[id]} - ${difficulty}☆`,
+                href: `/location/${id}_${difficulty}`,
+            };
+        })
+    );
+});
+
 const fps = 30;
 const formatTime = (frames) => {
     const totalSeconds = Math.floor(frames / fps);
@@ -97,40 +110,12 @@ const getLeaderboardData = async (leaderboardId, count, lastScore = null, lastPl
 };
 
 app.get("/", async (req, res) => {
-    const locId = "rocky_plateau_15";
     try {
-        const response = await getLeaderboardData(locId, 5);
-
-        // fetch detailed player data for data that was updated
-        const data = await Promise.all(
-            response.entries.map(async (entry) => {
-                const playerData = await getDetailedPlayerDataCached(locId, entry.player_id, entry.score);
-                return {
-                    name: entry.player_name,
-                    time: formatTime(entry.score),
-                    power: playerData.power,
-                };
-            })
-        );
-
-        res.render("index", { data });
+        res.render("index", { navItems });
     } catch (error) {
-        console.error("Error fetching data:", error);
-        res.status(500).send("Error fetching data");
+        console.error(error);
+        res.status(500).send("Error");
     }
-});
-const difficulties = [5, 10, 15];
-
-const navItems = [];
-Object.keys(leaderboardIds).forEach((id) => {
-    navItems.push(
-        difficulties.map((difficulty) => {
-            return {
-                name: `${leaderboardIds[id]} - ${difficulty}☆`,
-                href: `/location/${id}_${difficulty}`,
-            };
-        })
-    );
 });
 
 app.get("/location/:leaderboard_id", async (req, res) => {
@@ -145,7 +130,7 @@ app.get("/location/:leaderboard_id", async (req, res) => {
         const name = `${leaderboardIds[namePart]} - ${numberPart}☆`;
 
         if (leaderboardIds[namePart]) {
-            const response = await getLeaderboardDataCached(leaderboardId, 5);
+            const response = await getLeaderboardDataCached(leaderboardId, 50);
 
             // fetch detailed player data for data that was updated
             const data = await Promise.all(
@@ -159,7 +144,7 @@ app.get("/location/:leaderboard_id", async (req, res) => {
                 })
             );
 
-            res.render("index", { name, data, navItems });
+            res.render("leaderboard", { name, data, navItems });
         } else {
             res.status(404).json({
                 message: `Leaderboard ID ${leaderboardId} not found.`,
