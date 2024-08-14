@@ -3,11 +3,14 @@ const NodeCache = require("node-cache");
 const app = express();
 const port = 3000;
 
+const leaderboardIds = require("./ids");
+
 app.set("view engine", "ejs");
 app.set("views", "./views");
 app.use(express.static("public"));
 
-const cache = new NodeCache();
+const leaderboardCache = new NodeCache({ stdTTL: 60 * 5 }); // 5 min cache
+const detailCache = new NodeCache();
 
 const fps = 30;
 const formatTime = (frames) => {
@@ -22,17 +25,16 @@ const formatTime = (frames) => {
 const getDetailedPlayerDataCached = async (leaderboardId, playerId, score) => {
     // get from cache if the time is the same
     const cacheKey = `${leaderboardId}-${playerId}`;
-    const cachedData = cache.get(cacheKey);
+    const cachedData = detailCache.get(cacheKey);
 
-    if (cachedData && cachedData.score == score) {
-        return cachedData;
-    }
+    if (cachedData && cachedData.score == score) return cachedData;
+
     console.log(`time for ${playerId} changed, fetching new data`);
 
     const data = await getDetailedPlayerData(leaderboardId, playerId);
 
     // store in cache
-    cache.set(cacheKey, data);
+    detailCache.set(cacheKey, data);
     return data;
 };
 
@@ -60,7 +62,20 @@ const getDetailedPlayerData = async (leaderboardId, playerId) => {
     return json;
 };
 
+const getLeaderboardDataCached = async (leaderboardId, count, lastScore = null, lastPlayerId = null, startRank = 0) => {
+    const cacheKey = `${leaderboardId}-${count}-${lastScore}-${lastPlayerId}-${startRank}`;
+    const cachedData = leaderboardCache.get(cacheKey);
+
+    if (cachedData) return cachedData;
+
+    const data = await getLeaderboardData(leaderboardId, count, lastScore, lastPlayerId, startRank);
+
+    leaderboardCache.set(cacheKey, data);
+    return data;
+};
 const getLeaderboardData = async (leaderboardId, count, lastScore = null, lastPlayerId = null, startRank = 0) => {
+    console.log(`Fetching leaderboard ${leaderboardId}`);
+
     const uri = "https://stonestoryrpg.com/lb/location_get.php";
     const formData = new FormData();
     formData.append("leaderboard_id", leaderboardId);
@@ -84,7 +99,7 @@ const getLeaderboardData = async (leaderboardId, count, lastScore = null, lastPl
 app.get("/", async (req, res) => {
     const locId = "rocky_plateau_15";
     try {
-        const response = await getLeaderboardData(locId, 50);
+        const response = await getLeaderboardData(locId, 5);
 
         // fetch detailed player data for data that was updated
         const data = await Promise.all(
@@ -102,6 +117,57 @@ app.get("/", async (req, res) => {
     } catch (error) {
         console.error("Error fetching data:", error);
         res.status(500).send("Error fetching data");
+    }
+});
+const difficulties = [5, 10, 15];
+
+const navItems = [];
+Object.keys(leaderboardIds).forEach((id) => {
+    navItems.push(
+        difficulties.map((difficulty) => {
+            return {
+                name: `${leaderboardIds[id]} - ${difficulty}☆`,
+                href: `/location/${id}_${difficulty}`,
+            };
+        })
+    );
+});
+
+app.get("/location/:leaderboard_id", async (req, res) => {
+    try {
+        // Access the leaderboard_id parameter from the request
+        const leaderboardId = req.params.leaderboard_id;
+
+        const parts = leaderboardId.split("_");
+        const namePart = parts.slice(0, -1).join("_");
+        const numberPart = parts[parts.length - 1];
+
+        const name = `${leaderboardIds[namePart]} - ${numberPart}☆`;
+
+        if (leaderboardIds[namePart]) {
+            const response = await getLeaderboardDataCached(leaderboardId, 5);
+
+            // fetch detailed player data for data that was updated
+            const data = await Promise.all(
+                response.entries.map(async (entry) => {
+                    const playerData = await getDetailedPlayerDataCached(leaderboardId, entry.player_id, entry.score);
+                    return {
+                        name: entry.player_name,
+                        time: formatTime(entry.score),
+                        power: playerData.power,
+                    };
+                })
+            );
+
+            res.render("index", { name, data, navItems });
+        } else {
+            res.status(404).json({
+                message: `Leaderboard ID ${leaderboardId} not found.`,
+            });
+        }
+    } catch (error) {
+        console.error(error);
+        res.status(500).send("An error occured");
     }
 });
 

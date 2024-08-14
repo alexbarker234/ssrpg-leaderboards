@@ -3,9 +3,11 @@ body {
     color: white;
     font-family: monospace;
 }
+
 .table-rank {
     text-align: right;
 }
+
 h1 {
     text-align: center;
 }
@@ -14,6 +16,7 @@ table {
     border-collapse: collapse;
     margin: auto;
 }
+
 table,
 tr,
 td {
@@ -26,4 +29,25 @@ td {
 
 table tr:nth-child(even) {
     background-color: #383838;
+}
+
+a {
+    color: #b0b0b0;
+}
+
+nav {
+    display: flex;
+    justify-content: space-between;
+    width: 90%;
+    margin: auto;
+}
+
+.nav-item {
+    display: inline;
+}
+
+.nav-section {
+    width: fit-content;
+    display: flex;
+    flex-direction: column;
 }

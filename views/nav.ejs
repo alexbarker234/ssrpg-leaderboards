@@ -1,0 +1,12 @@
+<nav>
+
+  <% navItems.forEach((section)=> { %>
+  <div class="nav-section">
+    <% section.forEach((item)=> { %>
+
+    <div class="nav-item"><a href="<%= item.href %>"><%= item.name %></a></div>
+    <% }); %>
+
+  </div>
+  <% }); %>
+</nav>
