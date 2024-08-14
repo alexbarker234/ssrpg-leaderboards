@@ -1,6 +1,6 @@
 body {
     background-color: black;
-    color: white;
+    color: #bdb7af;
     font-family: monospace;
 }
 
@@ -8,8 +8,9 @@ body {
     text-align: right;
 }
 
-h1 {
+h1, h2, h3 {
     text-align: center;
+    color: white
 }
 
 table {
@@ -21,6 +22,7 @@ table,
 tr,
 td {
     border: none;
+    color: white;
 }
 
 td {
@@ -37,6 +39,12 @@ a {
 
 p {
     text-align: center;
+    font-size: 14px;
+}
+
+#logo {
+    margin: 2rem auto;
+    width: fit-content;
 }
 
 nav {
