@@ -1,10 +1,13 @@
 const express = require("express");
+const NodeCache = require("node-cache");
 const app = express();
 const port = 3000;
 
 app.set("view engine", "ejs");
 app.set("views", "./views");
 app.use(express.static("public"));
+
+const cache = new NodeCache();
 
 const fps = 30;
 const formatTime = (frames) => {
@@ -14,6 +17,47 @@ const formatTime = (frames) => {
     const remainderFrames = frames % fps;
 
     return (minutes ? `${minutes}m ` : "") + `${seconds}s ${remainderFrames}F`;
+};
+
+const getDetailedPlayerDataCached = async (leaderboardId, playerId, score) => {
+    // get from cache if the time is the same
+    const cacheKey = `${leaderboardId}-${playerId}`;
+    const cachedData = cache.get(cacheKey);
+
+    if (cachedData && cachedData.score == score) {
+        return cachedData;
+    }
+    console.log(`time for ${playerId} changed, fetching new data`);
+
+    const data = await getDetailedPlayerData(leaderboardId, playerId);
+
+    // store in cache
+    cache.set(cacheKey, data);
+    return data;
+};
+
+const getDetailedPlayerData = async (leaderboardId, playerId) => {
+    const uri = "https://stonestoryrpg.com/lb/location_player.php";
+    const formData = new FormData();
+    formData.append("leaderboard_id", leaderboardId);
+    formData.append("player_id", playerId);
+
+    const response = await fetch(uri, {
+        method: "POST",
+        body: formData,
+    });
+    if (!response.ok) {
+        throw new Error("Request failed.");
+    }
+
+    var data = await response.text();
+
+    // the json returned is invalid. why
+    // this wraps everything in quotes. parse it later if you need it
+    data = data.replace(/([^,{}]+):/g, '"$1":').replace(/:([^,{}]+)/g, ':"$1"');
+    const json = JSON.parse(data);
+
+    return json;
 };
 
 const getLeaderboardData = async (leaderboardId, count, lastScore = null, lastPlayerId = null, startRank = 0) => {
@@ -38,14 +82,21 @@ const getLeaderboardData = async (leaderboardId, count, lastScore = null, lastPl
 };
 
 app.get("/", async (req, res) => {
+    const locId = "rocky_plateau_15";
     try {
-        const response = await getLeaderboardData("rocky_plateau_15", 50);
-        const data = response.entries.map((entry) => {
-            return {
-                name: entry.player_name,
-                time: formatTime(entry.score),
-            };
-        });
+        const response = await getLeaderboardData(locId, 50);
+
+        // fetch detailed player data for data that was updated
+        const data = await Promise.all(
+            response.entries.map(async (entry) => {
+                const playerData = await getDetailedPlayerDataCached(locId, entry.player_id, entry.score);
+                return {
+                    name: entry.player_name,
+                    time: formatTime(entry.score),
+                    power: playerData.power,
+                };
+            })
+        );
 
         res.render("index", { data });
     } catch (error) {
