@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SSRPG Leaderboards</title>
+    <link rel="stylesheet" href="./main.css">
+</head>
+
+<body>
+    <h1>Rocky Plateau 15 - Leaderboard</h1>
+    <table>
+        <tr>
+            <th>Rank</th>
+            <th>Name</th>
+            <th>Time</th>
+        </tr>
+        <% data.forEach((item, index)=> { %>
+            <tr>
+                <td class="table-rank">
+                    <%= index + 1 %>.
+                </td>
+                <td>
+                    <%= item.name %>
+                </td>
+                <td>
+                    <%= item.time %>
+                        </div>
+            </tr>
+            <% }); %>
+    </table>
+</body>
+
+</html>
