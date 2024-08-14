@@ -29,8 +29,16 @@ td {
     padding: 0px 4px;
 }
 
-table tr:nth-child(even) {
-    background-color: #383838;
+table {
+    min-width: 350px;
+}
+
+table tr:nth-child(odd):not(:first-child) {
+    background-color: #171717;
+}
+
+table tr:nth-child(even):not(:first-child) {
+    background-color: #2e2e2e;
 }
 
 a {
