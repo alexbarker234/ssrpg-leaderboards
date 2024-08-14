@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SSRPG Leaderboards</title>
+  <link rel="stylesheet" href="/main.css">
+</head>
+
+<body>
+  <%- include('nav', { navItems }) %>
+  <h1>
+    <%= name %>
+  </h1>
+  <div class="leaderboards">
+    <% data.forEach((board)=> { %>
+    <div class="leaderboard">
+      <h2><%= board.name %></h2>
+      <%- include('locLeaderboard', { data: board.data }) %>
+    </div>
+    <% }); %>
+
+  </div>
+
+</body>
+
+</html>

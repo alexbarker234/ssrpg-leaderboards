@@ -1,0 +1,20 @@
+<table>
+  <tr>
+    <th>Rank</th>
+    <th>Name</th>
+    <th>Score</th>
+  </tr>
+  <% data.forEach((item, index)=> { %>
+  <tr>
+    <td style="text-align: right;">
+      <%= index + 1 %>.
+    </td>
+    <td>
+      <%= item.name %>
+    </td>
+    <td style="text-align: right;">
+      <%= item.score %>
+    </td>
+  </tr>
+  <% }); %>
+</table>

@@ -2,8 +2,8 @@ const express = require("express");
 const NodeCache = require("node-cache");
 const app = express();
 const port = process.env.PORT ?? 80;
-
-const leaderboardIds = require("./src/ids");
+const amountToFetch = process.env.fetchAmount ?? 5;
+const { leaderboardIds, eventIds } = require("./src/ids.js");
 
 app.set("view engine", "ejs");
 app.set("views", "./src/views");
@@ -15,14 +15,10 @@ const detailCache = new NodeCache();
 const difficulties = [5, 10, 15];
 const navItems = [];
 Object.keys(leaderboardIds).forEach((id) => {
-    navItems.push(
-        difficulties.map((difficulty) => {
-            return {
-                name: `${leaderboardIds[id]} - ${difficulty}☆`,
-                href: `/location/${id}_${difficulty}`,
-            };
-        })
-    );
+    navItems.push({
+        name: `${leaderboardIds[id]}`,
+        href: `/location/${id}`,
+    });
 });
 
 const fps = 30;
@@ -35,7 +31,7 @@ const formatTime = (frames) => {
     return (minutes ? `${minutes}m ` : "") + `${seconds}s ${remainderFrames}F`;
 };
 
-const getDetailedPlayerDataCached = async (leaderboardId, playerId, score) => {
+const getDetailedLocPlayerDataCached = async (leaderboardId, playerId, score) => {
     // get from cache if the time is the same
     const cacheKey = `${leaderboardId}-${playerId}`;
     const cachedData = detailCache.get(cacheKey);
@@ -44,14 +40,14 @@ const getDetailedPlayerDataCached = async (leaderboardId, playerId, score) => {
 
     console.log(`time for ${playerId} changed, fetching new data`);
 
-    const data = await getDetailedPlayerData(leaderboardId, playerId);
+    const data = await getDetailedLocPlayerData(leaderboardId, playerId);
 
     // store in cache
     detailCache.set(cacheKey, data);
     return data;
 };
 
-const getDetailedPlayerData = async (leaderboardId, playerId) => {
+const getDetailedLocPlayerData = async (leaderboardId, playerId) => {
     const uri = "https://stonestoryrpg.com/lb/location_player.php";
     const formData = new FormData();
     formData.append("leaderboard_id", leaderboardId);
@@ -82,21 +78,54 @@ const getDetailedPlayerData = async (leaderboardId, playerId) => {
     return json;
 };
 
-const getLeaderboardDataCached = async (leaderboardId, count, lastScore = null, lastPlayerId = null, startRank = 0) => {
+const getLocationLeaderboardDataCached = async (leaderboardId, count, lastScore = null, lastPlayerId = null, startRank = 0) => {
     const cacheKey = `${leaderboardId}-${count}-${lastScore}-${lastPlayerId}-${startRank}`;
     const cachedData = leaderboardCache.get(cacheKey);
 
     if (cachedData) return cachedData;
 
-    const data = await getLeaderboardData(leaderboardId, count, lastScore, lastPlayerId, startRank);
+    const data = await getLocationLeaderboardData(leaderboardId, count, lastScore, lastPlayerId, startRank);
 
     leaderboardCache.set(cacheKey, data);
     return data;
 };
-const getLeaderboardData = async (leaderboardId, count, lastScore = null, lastPlayerId = null, startRank = 0) => {
+const getLocationLeaderboardData = async (leaderboardId, count, lastScore = null, lastPlayerId = null, startRank = 0) => {
     console.log(`Fetching leaderboard ${leaderboardId}`);
 
     const uri = "https://stonestoryrpg.com/lb/location_get.php";
+    const formData = new FormData();
+    formData.append("leaderboard_id", leaderboardId);
+    formData.append("count", count);
+    if (lastScore !== null) {
+        formData.append("last_score", lastScore);
+    }
+    if (lastPlayerId !== null) {
+        formData.append("last_player_id", lastPlayerId);
+    }
+    const response = await fetch(uri, {
+        method: "POST",
+        body: formData,
+    });
+    if (!response.ok) {
+        throw new Error("Request failed.");
+    }
+    return await response.json();
+};
+const getEventLeaderboardDataCached = async (leaderboardId, count, lastScore = null, lastPlayerId = null, startRank = 0) => {
+    const cacheKey = `${leaderboardId}-${count}-${lastScore}-${lastPlayerId}-${startRank}`;
+    const cachedData = leaderboardCache.get(cacheKey);
+
+    if (cachedData) return cachedData;
+
+    const data = await getEventLeaderboardData(leaderboardId, count, lastScore, lastPlayerId, startRank);
+
+    leaderboardCache.set(cacheKey, data);
+    return data;
+};
+const getEventLeaderboardData = async (leaderboardId, count, lastScore = null, lastPlayerId = null, startRank = 0) => {
+    console.log(`Fetching leaderboard ${leaderboardId}`);
+
+    const uri = "https://stonestoryrpg.com/lb/event_get.php";
     const formData = new FormData();
     formData.append("leaderboard_id", leaderboardId);
     formData.append("count", count);
@@ -125,33 +154,70 @@ app.get("/", async (req, res) => {
     }
 });
 
+const processLocLeaderboard = async (leaderboardId) => {
+    const response = await getLocationLeaderboardDataCached(leaderboardId, amountToFetch);
+
+    // fetch detailed player data for data that was updated
+    const data = await Promise.all(
+        response.entries.map(async (entry) => {
+            const playerData = await getDetailedLocPlayerDataCached(leaderboardId, entry.player_id, entry.score);
+            return {
+                name: entry.player_name,
+                time: formatTime(entry.score),
+                power: playerData.power,
+            };
+        })
+    );
+    return data;
+};
+
+const processEventLeaderboard = async (leaderboardId) => {
+    const response = await getEventLeaderboardDataCached(leaderboardId, amountToFetch);
+
+    const data = response.entries.map((entry) => {
+        return {
+            name: entry.player_name,
+            score: entry.score,
+        };
+    });
+    return data;
+};
+
 app.get("/location/:leaderboard_id", async (req, res) => {
     try {
-        // Access the leaderboard_id parameter from the request
         const leaderboardId = req.params.leaderboard_id;
 
-        const parts = leaderboardId.split("_");
-        const namePart = parts.slice(0, -1).join("_");
-        const numberPart = parts[parts.length - 1];
+        const name = leaderboardIds[leaderboardId];
 
-        const name = `${leaderboardIds[namePart]} - ${numberPart}☆`;
-
-        if (leaderboardIds[namePart]) {
-            const response = await getLeaderboardDataCached(leaderboardId, 50);
-
-            // fetch detailed player data for data that was updated
-            const data = await Promise.all(
-                response.entries.map(async (entry) => {
-                    const playerData = await getDetailedPlayerDataCached(leaderboardId, entry.player_id, entry.score);
-                    return {
-                        name: entry.player_name,
-                        time: formatTime(entry.score),
-                        power: playerData.power,
-                    };
+        if (leaderboardIds[leaderboardId]) {
+            const allBoards = await Promise.all(
+                difficulties.map(async (difficulty) => {
+                    const data = await processLocLeaderboard(`${leaderboardId}_${difficulty}`);
+                    return { difficulty, data, name: `${leaderboardIds[leaderboardId]} - ${difficulty}☆` };
                 })
             );
+            res.render("locLeaderboards", { name, data: allBoards, navItems });
+        } else {
+            res.status(404).json({
+                message: `Leaderboard ID ${leaderboardId} not found.`,
+            });
+        }
+    } catch (error) {
+        console.error(error);
+        res.status(500).send("An error occured");
+    }
+});
 
-            res.render("leaderboard", { name, data, navItems });
+app.get("/event/:leaderboard_id", async (req, res) => {
+    try {
+        const leaderboardId = req.params.leaderboard_id;
+
+        const name = eventIds[leaderboardId];
+
+        if (eventIds[leaderboardId]) {
+            const data = await processEventLeaderboard(`${leaderboardId}`);
+            console.log(data);
+            res.render("eventLeaderboards", { name, data, navItems });
         } else {
             res.status(404).json({
                 message: `Leaderboard ID ${leaderboardId} not found.`,

@@ -9,4 +9,18 @@ const leaderboardIds = {
     temple: "Temple",
 };
 
-module.exports = leaderboardIds;
+// Much older events do not have leaderboards
+const eventIds = {
+    nagaraja_2x: "Lunar New Year",
+    spring: "Spring",
+    summer: "Summer Moonstice",
+    hamartia: "Hamartia",
+    bolesh_2x: "Fangs in the Dark",
+    towering: "Towering",
+    aether_talisman: "Aether Talisman",
+    burnout: "Burnout",
+    BFG_reheat: "Pallas' Judgment",
+    anniversary2024: "Anniversary 2024",
+};
+
+module.exports = { leaderboardIds, eventIds };

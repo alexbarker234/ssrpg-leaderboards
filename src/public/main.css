@@ -1,17 +1,31 @@
+:root {
+    --cyan: #00ffff;
+    --yellow: #ffff00;
+
+    --dark-grey: #171717;
+    --light-grey: #2e2e2e;
+}
+
 body {
     background-color: black;
     color: #bdb7af;
     font-family: monospace;
 }
 
-.table-rank {
-    text-align: right;
-}
-
 h1, h2, h3 {
     text-align: center;
     color: white
 }
+
+/* LEADERBOARD */
+.leaderboards {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-around;
+    width: 90%;
+    margin: auto;
+}
+
 
 table {
     border-collapse: collapse;
@@ -34,21 +48,32 @@ table {
 }
 
 table tr:nth-child(odd):not(:first-child) {
-    background-color: #171717;
+    background-color: var(--dark-grey);
 }
 
 table tr:nth-child(even):not(:first-child) {
-    background-color: #2e2e2e;
+    background-color: var(--light-grey);
 }
+
 
 a {
     color: #b0b0b0;
+}
+
+a:hover {
+    color: white;
+}
+
+a:visited {
+    color: #707070;
 }
 
 p {
     text-align: center;
     font-size: 14px;
 }
+
+/* NAV */
 
 #logo {
     margin: 2rem auto;
@@ -57,9 +82,13 @@ p {
 
 nav {
     display: flex;
-    justify-content: space-between;
+    justify-content: center;
     width: 90%;
     margin: auto;
+}
+
+nav .seperator {
+    margin: 0 0.5rem;
 }
 
 .nav-item {
