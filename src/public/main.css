@@ -10,6 +10,9 @@ body {
     background-color: black;
     color: #bdb7af;
     font-family: monospace;
+
+    margin: 0;
+    font-size: 14px;
 }
 
 h1, h2, h3 {
@@ -70,7 +73,6 @@ a:visited {
 
 p {
     text-align: center;
-    font-size: 14px;
 }
 
 /* NAV */
@@ -81,22 +83,39 @@ p {
 }
 
 nav {
-    display: flex;
-    justify-content: center;
-    width: 90%;
+    width: 95%;
     margin: auto;
+}
+
+.nav-section {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    width: 100%;
+    margin-bottom: 1rem;
 }
 
 nav .seperator {
     margin: 0 0.5rem;
+    margin-top: 0.5rem;
 }
 
 .nav-item {
     display: inline;
+    white-space: nowrap;
+    margin-top: 0.5rem;
 }
 
-.nav-section {
-    width: fit-content;
+/* Events list */
+.events-list {
     display: flex;
+    flex-wrap: wrap;
     flex-direction: column;
+    width: 100%;
+    margin-bottom: 1rem;
+}
+
+.events-list a {
+    width: fit-content;
+    margin: 0.25rem auto;
 }

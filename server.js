@@ -2,7 +2,7 @@ const express = require("express");
 const NodeCache = require("node-cache");
 const app = express();
 const port = process.env.PORT ?? 80;
-const amountToFetch = process.env.fetchAmount ?? 5;
+const amountToFetch = process.env.FETCH_AMOUNT ?? 5;
 const { leaderboardIds, eventIds } = require("./src/ids.js");
 
 app.set("view engine", "ejs");
@@ -148,6 +148,20 @@ const getEventLeaderboardData = async (leaderboardId, count, lastScore = null, l
 app.get("/", async (req, res) => {
     try {
         res.render("index", { navItems });
+    } catch (error) {
+        console.error(error);
+        res.status(500).send("Error");
+    }
+});
+app.get("/events", async (req, res) => {
+    try {
+        const events = Object.keys(eventIds).map((id) => {
+            return {
+                name: eventIds[id],
+                href: `/event/${id}`,
+            };
+        });
+        res.render("eventList", { navItems, events });
     } catch (error) {
         console.error(error);
         res.status(500).send("Error");

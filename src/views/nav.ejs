@@ -1,10 +1,14 @@
 <div id="logo"><a href="/"><img src="https://stonestoryrpg.com/capsule_b_231x87.png" alt="Stone Story RPG"></a></div>
 <nav>
-
-  <% navItems.forEach((item, index)=> { %>
-  <div class="nav-item"><a href="<%= item.href %>"><%= item.name %></a></div>
-  <% if (index < navItems.length - 1) { %>
-  <div class="seperator">|</div>
-  <% } %>
-  <% }); %>
+  <div class="nav-section">
+    <% navItems.forEach((item, index)=> { %>
+    <a href="<%= item.href %>" class="nav-item"> <%= item.name %> </a>
+    <% if (index < navItems.length - 1) { %>
+    <div class="seperator">|</div>
+    <% } %>
+    <% }); %>
+  </div>
+  <div class="nav-section">
+    <a href="/events" class="nav-item">Events</a>
+  </div>
 </nav>

@@ -11,7 +11,6 @@ const leaderboardIds = {
 
 // Much older events do not have leaderboards
 const eventIds = {
-    nagaraja_2x: "Lunar New Year",
     spring: "Spring",
     summer: "Summer Moonstice",
     hamartia: "Hamartia",
