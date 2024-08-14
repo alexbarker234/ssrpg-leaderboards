@@ -65,13 +65,20 @@ const getDetailedPlayerData = async (leaderboardId, playerId) => {
         throw new Error("Request failed.");
     }
 
-    var data = await response.text();
+    const rawData = await response.text();
 
     // the json returned is invalid. why
     // this wraps everything in quotes. parse it later if you need it
-    data = data.replace(/([^,{}]+):/g, '"$1":').replace(/:([^,{}]+)/g, ':"$1"');
-    const json = JSON.parse(data);
-
+    // some people have colons in their names. Bro
+    const data = rawData.replace(/([^,{}:]+):/g, '"$1":').replace(/:([^,{}]+)/g, ':"$1"');
+    var json;
+    try {
+        json = JSON.parse(data);
+    } catch (error) {
+        console.log(rawData);
+        console.log(data);
+        throw error;
+    }
     return json;
 };
 
