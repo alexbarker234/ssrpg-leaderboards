@@ -3,11 +3,11 @@ const NodeCache = require("node-cache");
 const app = express();
 const port = process.env.PORT ?? 80;
 
-const leaderboardIds = require("./ids");
+const leaderboardIds = require("./src/ids");
 
 app.set("view engine", "ejs");
-app.set("views", "./views");
-app.use(express.static("public"));
+app.set("views", "./src/views");
+app.use(express.static("./src/public"));
 
 const leaderboardCache = new NodeCache({ stdTTL: 60 * 5 }); // 5 min cache
 const detailCache = new NodeCache();
@@ -157,5 +157,5 @@ app.get("/location/:leaderboard_id", async (req, res) => {
 });
 
 app.listen(port, () => {
-    console.log(`Server is running on http://localhost:${port}`);
+    console.log(`Server is running on port ${port}`);
 });

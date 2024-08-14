@@ -2,10 +2,10 @@
     "name": "ssrpg-leaderboards",
     "version": "1.0.0",
     "description": "",
-    "main": "./src/server.js",
+    "main": "server.js",
     "scripts": {
-        "start": "node ./src/server.js",
-        "dev": "set PORT=3000 && node ./src/server.js"
+        "start": "node server.js",
+        "dev": "set PORT=3000 && node server.js"
     },
     "author": "",
     "license": "ISC",
