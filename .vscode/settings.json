@@ -1,5 +1,6 @@
 {
     "editor.formatOnSave": true,
+    "prettier.printWidth": 120,
     "[html]": {
         "editor.defaultFormatter": "j69.ejs-beautify"
     }

@@ -13,7 +13,7 @@
   <h1>Events</h1>
   <div class="events-list">
     <% events.forEach((events, index)=> { %>
-    <a href="<%= events.href %>"><%= events.name %></a>
+    <a href="<%= events.href %>"><%= events.name %> - <%= events.date %></a>
     <% }); %>
   </div>
 

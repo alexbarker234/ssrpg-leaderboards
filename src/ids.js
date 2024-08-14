@@ -11,15 +11,15 @@ const leaderboardIds = {
 
 // Much older events do not have leaderboards
 const eventIds = {
-    spring: "Spring",
-    summer: "Summer Moonstice",
-    hamartia: "Hamartia",
-    bolesh_2x: "Fangs in the Dark",
-    towering: "Towering",
-    aether_talisman: "Aether Talisman",
-    burnout: "Burnout",
-    BFG_reheat: "Pallas' Judgment",
-    anniversary2024: "Anniversary 2024",
+    spring: { name: "Spring Equinox", date: "2024-03-01" },
+    summer: { name: "Summer Moonstice", date: "2024-03-01" },
+    hamartia: { name: "Hamartia", date: "2024-03-01" },
+    bolesh_2x: { name: "Fangs in the Dark", date: "2024-03-01" },
+    towering: { name: "Towering Defenses", date: "2024-03-01" },
+    aether_talisman: { name: "Aether Talisman", date: "2024-03-01" },
+    burnout: { name: "Burnout", date: "2024-03-01" },
+    BFG_reheat: { name: "Pallas' Judgment", date: "2024-03-01" },
+    anniversary2024: { name: "10 Year Anniversary", date: "2024-03-01" },
 };
 
 module.exports = { leaderboardIds, eventIds };

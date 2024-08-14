@@ -5,7 +5,7 @@
     "main": "server.js",
     "scripts": {
         "start": "node server.js",
-        "dev": "set PORT=3000 && node --watch server.js"
+        "dev": "set PORT=3000 && node --watch --env-file .env server.js"
     },
     "author": "",
     "license": "ISC",
