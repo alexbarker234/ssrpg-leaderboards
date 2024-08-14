@@ -1,17 +1,17 @@
 {
-  "name": "ssrpg-leaderboards",
-  "version": "1.0.0",
-  "description": "",
-  "main": "main.js",
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "node server.js"
-  },
-  "author": "",
-  "license": "ISC",
-  "dependencies": {
-    "ejs": "^3.1.10",
-    "express": "^4.19.2",
-    "node-cache": "^5.1.2"
-  }
+    "name": "ssrpg-leaderboards",
+    "version": "1.0.0",
+    "description": "",
+    "main": "server.js",
+    "scripts": {
+        "start": "node server.js",
+        "dev": "set PORT=3000 && node server.js"
+    },
+    "author": "",
+    "license": "ISC",
+    "dependencies": {
+        "ejs": "^3.1.10",
+        "express": "^4.19.2",
+        "node-cache": "^5.1.2"
+    }
 }

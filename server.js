@@ -1,7 +1,7 @@
 const express = require("express");
 const NodeCache = require("node-cache");
 const app = express();
-const port = 80;
+const port = process.env.PORT ?? 80;
 
 const leaderboardIds = require("./ids");
 
