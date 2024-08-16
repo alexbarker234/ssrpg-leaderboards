@@ -44,6 +44,46 @@ const parseInvalidJson = (rawData) => {
     return JSON.parse(data);
 };
 
+// Limit calls per second to avoid spamming API
+const MAX_CALLS_PER_SECOND = 30;
+let tokens = MAX_CALLS_PER_SECOND;
+let lastTimestamp = Date.now();
+
+const refillTokens = () => {
+    const now = Date.now();
+    const elapsedMilliseconds = now - lastTimestamp;
+    tokens = Math.min(MAX_CALLS_PER_SECOND, tokens + (elapsedMilliseconds * MAX_CALLS_PER_SECOND) / 1000);
+    lastTimestamp = now;
+};
+
+const getDetailedLocPlayerDataLimited = async (leaderboardId, playerId, score) => {
+    refillTokens();
+    const uri = "https://stonestoryrpg.com/lb/location_player.php";
+
+    // Fetch from cache if time hasn't changed
+    const cacheKey = `${leaderboardId}-${playerId}`;
+    const cachedData = detailCache.get(cacheKey);
+
+    if (cachedData && cachedData.score == score) return cachedData;
+
+    if (tokens > 0) {
+        tokens--;
+
+        const formData = new FormData();
+        formData.append("leaderboard_id", leaderboardId);
+        formData.append("player_id", playerId);
+
+        const data = await fetchData(uri, formData, true);
+        detailCache.set(cacheKey, data);
+
+        return data;
+    } else {
+        return new Promise((resolve) =>
+            setTimeout(() => resolve(getDetailedLocPlayerDataLimited(leaderboardId, playerId)), 40)
+        );
+    }
+};
+
 const getDetailedLocPlayerData = async (leaderboardId, playerId) => {
     const uri = "https://stonestoryrpg.com/lb/location_player.php";
     const formData = new FormData();
@@ -89,13 +129,7 @@ const processLocLeaderboard = async (leaderboardId) => {
     const response = await getLocationLeaderboardDataCached(leaderboardId, amountToFetch);
     return await Promise.all(
         response.entries.map(async (entry) => {
-            const playerData = await fetchCachedData(
-                detailCache,
-                `${leaderboardId}-${entry.player_id}`,
-                getDetailedLocPlayerData,
-                leaderboardId,
-                entry.player_id
-            );
+            const playerData = await getDetailedLocPlayerDataLimited(leaderboardId, entry.player_id, entry.score);
             return {
                 name: entry.player_name,
                 time: formatTime(entry.score),
@@ -103,49 +137,6 @@ const processLocLeaderboard = async (leaderboardId) => {
             };
         })
     );
-};
-
-/**
- * This provides a rate limit to the leaderboard API so no more than 25 requests per second are made.
- * @param {*} leaderboardId
- * @returns
- */
-const processLocLeaderboardLimited = async (leaderboardId) => {
-    const response = await getLocationLeaderboardDataCached(leaderboardId, amountToFetch);
-    const entries = response.entries;
-    const result = [];
-
-    const batchSize = 25;
-
-    console.log(
-        `Processing ${entries.length} entries in ${Math.ceil(entries.length / batchSize)} batches of ${batchSize}...`
-    );
-    for (let i = 0; i < entries.length; i += batchSize) {
-        const batch = entries.slice(i, i + 25);
-        const batchResults = await Promise.all(
-            batch.map(async (entry) => {
-                const playerData = await fetchCachedData(
-                    detailCache,
-                    `${leaderboardId}-${entry.player_id}`,
-                    getDetailedLocPlayerData,
-                    leaderboardId,
-                    entry.player_id
-                );
-                return {
-                    name: entry.player_name,
-                    time: formatTime(entry.score),
-                    power: playerData.power,
-                };
-            })
-        );
-        result.push(...batchResults);
-
-        if (i + 25 < entries.length) {
-            await new Promise((resolve) => setTimeout(resolve, 1000));
-        }
-    }
-
-    return result;
 };
 
 const processEventLeaderboard = async (leaderboardId) => {
@@ -195,7 +186,7 @@ app.get(
         async (leaderboardId) =>
             await Promise.all(
                 difficulties.map(async (difficulty) => {
-                    const data = await processLocLeaderboardLimited(`${leaderboardId}_${difficulty}`);
+                    const data = await processLocLeaderboard(`${leaderboardId}_${difficulty}`);
                     return { difficulty, data, name: `${leaderboardIds[leaderboardId]} - ${difficulty}☆` };
                 })
             ),
