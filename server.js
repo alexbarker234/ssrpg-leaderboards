@@ -105,6 +105,49 @@ const processLocLeaderboard = async (leaderboardId) => {
     );
 };
 
+/**
+ * This provides a rate limit to the leaderboard API so no more than 25 requests per second are made.
+ * @param {*} leaderboardId
+ * @returns
+ */
+const processLocLeaderboardLimited = async (leaderboardId) => {
+    const response = await getLocationLeaderboardDataCached(leaderboardId, amountToFetch);
+    const entries = response.entries;
+    const result = [];
+
+    const batchSize = 25;
+
+    console.log(
+        `Processing ${entries.length} entries in ${Math.ceil(entries.length / batchSize)} batches of ${batchSize}...`
+    );
+    for (let i = 0; i < entries.length; i += batchSize) {
+        const batch = entries.slice(i, i + 25);
+        const batchResults = await Promise.all(
+            batch.map(async (entry) => {
+                const playerData = await fetchCachedData(
+                    detailCache,
+                    `${leaderboardId}-${entry.player_id}`,
+                    getDetailedLocPlayerData,
+                    leaderboardId,
+                    entry.player_id
+                );
+                return {
+                    name: entry.player_name,
+                    time: formatTime(entry.score),
+                    power: playerData.power,
+                };
+            })
+        );
+        result.push(...batchResults);
+
+        if (i + 25 < entries.length) {
+            await new Promise((resolve) => setTimeout(resolve, 1000));
+        }
+    }
+
+    return result;
+};
+
 const processEventLeaderboard = async (leaderboardId) => {
     const response = await getEventLeaderboardDataCached(leaderboardId, amountToFetch);
     return response.entries.map((entry) => ({
@@ -152,7 +195,7 @@ app.get(
         async (leaderboardId) =>
             await Promise.all(
                 difficulties.map(async (difficulty) => {
-                    const data = await processLocLeaderboard(`${leaderboardId}_${difficulty}`);
+                    const data = await processLocLeaderboardLimited(`${leaderboardId}_${difficulty}`);
                     return { difficulty, data, name: `${leaderboardIds[leaderboardId]} - ${difficulty}☆` };
                 })
             ),
