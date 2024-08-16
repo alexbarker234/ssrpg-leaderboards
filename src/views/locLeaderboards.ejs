@@ -6,6 +6,25 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>SSRPG Leaderboards</title>
   <link rel="stylesheet" href="/main.css">
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      const tabs = document.querySelectorAll('.tab-button');
+      const leaderboards = document.querySelectorAll('.leaderboard');
+
+      function clickTab(index) {
+        leaderboards.forEach((lb, i) => lb.classList.toggle('shown', i === index));
+        tabs.forEach((tab, i) => tab.classList.toggle('shown', i === index));
+      }
+
+      tabs.forEach((tab, index) => {
+        tab.addEventListener('click', () => clickTab(index));
+      });
+
+      if (tabs.length > 0) {
+        tabs[0].click();
+      }
+    });
+  </script>
 </head>
 
 <body>
@@ -13,6 +32,13 @@
   <h1>
     <%= name %>
   </h1>
+
+  <div class="leaderboard-tabs">
+    <% data.forEach((board, index) => { %>
+    <button class="tab-button" data-index="<%= index %>"><%= board.name %></button>
+    <% }); %>
+  </div>
+
   <div class="leaderboards">
     <% data.forEach((board)=> { %>
     <div class="leaderboard">

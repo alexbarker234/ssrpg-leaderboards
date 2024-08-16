@@ -47,6 +47,44 @@ p {
     margin-bottom: 2rem;
 }
 
+.leaderboard-tabs {
+    display: none;
+}
+
+.tab-button {
+    border: none;
+    background: none;
+    color: inherit;
+
+    padding: 0.5rem;
+    border: var(--light-grey) solid 2px;
+}
+
+.tab-button:hover {
+    background-color: var(--dark-grey);
+}
+
+.tab-button.shown {
+    border-bottom: none;
+
+}
+
+@media (max-width: 600px) {
+    .leaderboard-tabs {
+        display: flex;
+        justify-content: space-around;
+
+    }
+
+    .leaderboard {
+        display: none;
+    }
+
+    .leaderboard.shown {
+        display: block;
+    }
+}
+
 
 table {
     border-collapse: collapse;
