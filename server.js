@@ -12,7 +12,7 @@ app.use(express.static("./src/public"));
 
 const leaderboardCache = new NodeCache({ stdTTL: 60 * 5 }); // 5 min cache
 const detailCache = new NodeCache();
-const difficulties = [5, 10, 15];
+const difficulties = [5, 10, 15, 20];
 
 const navItems = Object.keys(leaderboardIds).map((id) => ({
     name: leaderboardIds[id],
