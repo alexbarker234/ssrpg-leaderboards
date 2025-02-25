@@ -40,8 +40,29 @@ const fetchData = async (uri, formData, fixJSON = false) => {
 };
 
 const parseInvalidJson = (rawData) => {
-    const data = rawData.replace(/([^,{}:]+):/g, '"$1":').replace(/:([^,{}]+)/g, ':"$1"');
-    return JSON.parse(data);
+    try {
+        // bane of my existance - tried regex but there was so many weird player names like URLs and smileys
+        // someones gonna come along with a player name called ",max_power:" or something stupid and break it again
+        const data = rawData
+            .replace("leaderboard_id:", '"leaderboard_id":"')
+            .replace(",player_id:", '","player_id":"')
+            .replace(",player_name:", '","player_name":"')
+            .replace(",rank:", '","rank":')
+            .replace(",score:", ',"score":')
+            .replace(",power:", ',"power":')
+            .replace(",damage:", ',"damage":')
+            .replace(",health:", ',"health":')
+            .replace(",max_power:", ',"max_power":')
+            .replace(",success:", ',"success":"')
+            .replace("}", '"}');
+
+        return JSON.parse(data);
+    } catch (error) {
+        console.error(error);
+        console.error(rawData);
+        // rethrow
+        throw new Error("Invalid JSON");
+    }
 };
 
 // Limit calls per second to avoid spamming API
